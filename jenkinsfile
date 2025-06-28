@@ -2,8 +2,8 @@ pipeline {
   agent any
   stages{
     stage('Build'){
-      steps
-      echo "Etapa Bluild no disponible"
+      steps{
+        echo "Etapa Bluild no disponible"
     }
   }
   stage('Tests'){
@@ -12,8 +12,10 @@ pipeline {
     }
   }
   stage('Deploy'){
-  steps{
-    sh "dock"
+    steps{
+      sh "docker-compose dow -v"
+      sh "docker-compose up -d--build"
+    }
   }
-  }
+}
 }
