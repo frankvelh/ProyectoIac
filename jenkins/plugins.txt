@@ -1,0 +1,7 @@
+workflow-aggregator
+git
+blueocean
+docker-plugin
+pipeline-utility-steps
+aws-credentials
+configuration-as-code
