@@ -1,94 +1,19 @@
 pipeline {
   agent any
-
-  environment {
-    AWS_REGION     = 'us-east-2'
-    ACCOUNT_ID     = '932119507588'
-    ECR_URL        = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    BACKEND_IMAGE  = "${ECR_URL}/hotel-backend"
-    FRONTEND_IMAGE = "${ECR_URL}/hotel-frontend"
-    BUCKET_NAME    = 'hotel-reservas-web'
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
-    stage('Build Backend JAR') {
-      steps {
-        dir('hotel-app/backend') {
-          sh './mvnw clean package -DskipTests'
-        }
-      }
-    }
-
-    stage('Build Frontend') {
-      steps {
-        dir('hotel-app/frontend') {
-          sh '''
-            npm install
-            npm run build
-          '''
-        }
-      }
-    }
-
-    stage('Static Analysis - Checkov') {
-      steps {
-        dir('infra') {
-          sh 'checkov -d . -o junitxml --output-file-path ../checkov-report.xml || true'
-        }
-      }
-    }
-
-    stage('Build Docker Images') {
-      steps {
-        sh '''
-          docker build -t hotel-backend ./hotel-app/backend
-          docker build -t hotel-frontend ./hotel-app/frontend
-        '''
-      }
-    }
-
-    stage('Push Images to ECR') {
-      steps {
-        sh '''
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL
-
-          docker tag hotel-backend:latest $BACKEND_IMAGE:latest
-          docker tag hotel-frontend:latest $FRONTEND_IMAGE:latest
-
-          docker push $BACKEND_IMAGE:latest
-          docker push $FRONTEND_IMAGE:latest
-        '''
-      }
-    }
-
-    stage('Deploy Infra with Terraform') {
-      steps {
-        dir('infra') {
-          sh '''
-            terraform init
-            terraform apply -auto-approve
-          '''
-        }
-      }
+  stages{
+    stage('Build'){
+      steps
+      echo "Etapa Bluild no disponible"
     }
   }
-
-  post {
-    always {
-      junit 'checkov-report.xml'
+  stage('Tests'){
+    steps{
+      echo "Etapa de test no disponible"
     }
-    success {
-      echo "Despliegue completo con éxito."
-    }
-    failure {
-      echo "Algo falló en el pipeline."
-    }
+  }
+  stage('Deploy'){
+  steps{
+    sh "dock"
+  }
   }
 }
-
