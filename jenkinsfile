@@ -18,12 +18,16 @@ pipeline {
     }
 
     stage('Build backend') {
-      steps {
-        dir('hotel-app/backend') {
-          sh './mvnw clean package -DskipTests'
-        }
-      }
+  steps {
+    dir('hotel-app/backend') {
+      sh '''
+        chmod +x mvnw
+        ./mvnw clean package -DskipTests
+      '''
     }
+  }
+}
+
 
     stage('Build frontend') {
       steps {
