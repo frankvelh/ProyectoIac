@@ -30,6 +30,11 @@ pipeline {
 
 
     stage('Build frontend') {
+      agent {
+    docker {
+      image 'node:18'
+    }
+  }
       steps {
         dir('hotel-app/frontend') {
           sh 'npm install'
