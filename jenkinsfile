@@ -1,122 +1,104 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    AWS_REGION = 'us-east-2'
-    ACCOUNT_ID = '932119507588'
-    BACKEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hotel-backend"
-    FRONTEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hotel-frontend"
-    BUCKET_NAME = 'hotel-reservas-web'
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        script {
-          sh '''
-        docker run --rm -v $PWD:/app -w /app bridgecrew/checkov:latest -d ./hotel-app/
-      '''
+    environment {
+        AWS_REGION = 'us-east-2'
+        ACCOUNT_ID = '932119507588'
+        BACKEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hotel-backend"
+        FRONTEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hotel-frontend"
+        BUCKET_NAME = 'hotel-reservas-web'
     }
-  }
-}
 
-    stage('Checkout disable skip') {
-      steps {
-        script {
-          sh "echo 'nada'"
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
         }
-      }
-    }
 
-    stage('Checkout') {
-      steps {
-        script {
-          sh "checkov -d ./hotel-app/"
+        stage('Run Checkov') {
+            steps {
+                script {
+                    sh '''
+                    docker run --rm -v $WORKSPACE:/workspace bridgecrew/checkov -d /workspace
+                    '''
+                }
+            }
         }
-      }
-    }
 
-    stage('Build backend') {
-      steps {
-        dir('hotel-app/backend') {
-          sh '''
-            chmod +x mvnw
-            ./mvnw clean package -DskipTests
-          '''
+        stage('Build Backend') {
+            steps {
+                dir('hotel-app/backend') {
+                    sh '''
+                    chmod +x mvnw
+                    ./mvnw clean package -DskipTests
+                    '''
+                }
+            }
         }
-      }
-    }
 
-    stage('Build frontend') {
-      steps {
-        dir('hotel-app/frontend') {
-          sh '''
-            docker run --rm -v $PWD:/app -w /app node:18 sh -c "npm install && npm run build"
-          '''
+        stage('Build Frontend') {
+            steps {
+                dir('hotel-app/frontend') {
+                    sh '''
+                    docker run --rm -v $PWD:/app -w /app node:18 sh -c "npm install && npm run build"
+                    '''
+                }
+            }
         }
-      }
-    }
 
-    stage('Checkov') {
-      steps {
-        sh '''
-          checkov -d infra -o junitxml --output-file-path checkov-report.xml || echo "<testsuite></testsuite>" > checkov-report.xml
-        '''
-      }
-    }
-
-    stage('Build Docker images') {
-      steps {
-        sh '''
-          docker build -t hotel-backend ./hotel-app/backend
-          docker build -t hotel-frontend ./hotel-app/frontend
-        '''
-      }
-    }
-
-    stage('Login & Push to ECR') {
-      steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-creds'
-        ]]) {
-          sh '''
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-            docker tag hotel-backend:latest $BACKEND_IMAGE:latest
-            docker tag hotel-frontend:latest $FRONTEND_IMAGE:latest
-            docker push $BACKEND_IMAGE:latest
-            docker push $FRONTEND_IMAGE:latest
-          '''
+        stage('Build Docker Images') {
+            steps {
+                sh '''
+                docker build -t hotel-backend ./hotel-app/backend
+                docker build -t hotel-frontend ./hotel-app/frontend
+                '''
+            }
         }
-      }
+
+        stage('Login & Push to ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    docker tag hotel-backend:latest $BACKEND_IMAGE:latest
+                    docker tag hotel-frontend:latest $FRONTEND_IMAGE:latest
+                    docker push $BACKEND_IMAGE:latest
+                    docker push $FRONTEND_IMAGE:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    dir('infra') {
+                        sh '''
+                        terraform init
+                        terraform apply -auto-approve
+                        '''
+                    }
+                }
+            }
+        }
     }
 
-    stage('Terraform Apply') {
-      steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-creds'
-        ]]) {
-          dir('infra') {
-            sh '''
-              terraform init
-              terraform apply -auto-approve
-            '''
-          }
+    post {
+        always {
+            script {
+                if (fileExists('checkov-report.xml')) {
+                    junit 'checkov-report.xml'
+                } else {
+                    echo 'No se encontró checkov-report.xml, omitiendo junit.'
+                }
+            }
         }
-      }
     }
-  }
-
-  post {
-    always {
-      script {
-        if (fileExists('checkov-report.xml')) {
-          junit 'checkov-report.xml'
-        } else {
-          echo 'No se encontró checkov-report.xml, omitiendo junit.'
-        }
-      }
-    }
-  }
 }
