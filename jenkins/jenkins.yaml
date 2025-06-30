@@ -4,17 +4,20 @@ jenkins:
       allowsSignup: false
       users:
         - id: "admin"
-          name: "user"
-          password: "user"
+          name: "Admin User"
+          password: "admin123"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
   clouds:
     - docker:
-        name: "Docker Cloud"
+        name: "docker-cloud"
         dockerApi:
           dockerHost:
             uri: "tcp://docker-agent:2375"
         templates:
           - name: "docker-agent"
-            remoteFs: "home/jenkins/agent"
+            remoteFs: "/home/jenkins/agent"
             connector:
               attach:
                 user: root

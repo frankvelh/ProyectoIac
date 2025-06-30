@@ -5,3 +5,4 @@ docker-plugin
 pipeline-utility-steps
 aws-credentials
 configuration-as-code
+pipeline-github-lib

@@ -2,35 +2,36 @@ version: '3.8'
 
 services:
   jenkins:
-    container_name: lab03
-    build: 
-      context: .
+    container_name: jenkins-hotel
+    build:
+      context: ./jenkins
     ports:
-      - "4001:8080"
-      - "50000:50000"
+      - "8080:8080"       # UI Jenkins
+      - "50000:50000"     # Conexión de agentes
     environment:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yaml
     volumes:
-      - jenkins_lab3:/var/jenkins_home
+      - jenkins_data:/var/jenkins_home
       - ./jenkins.yaml:/var/jenkins_home/jenkins.yaml
     networks:
-      - jenkins-lab03
-  
+      - jenkins-net
+    depends_on:
+      - docker-agent
+
   docker-agent:
     image: docker:24.0.7-dind
-    container_name: docker-agent03
+    container_name: docker-agent
     privileged: true
     environment:
       - DOCKER_TLS_CERTDIR=""
-    ports:
-      - 2375
     networks:
-      - jenkins-lab03
+      - jenkins-net
+    ports:
+      - "2375:2375"
 
-    
 volumes:
-  jenkins_lab3:
+  jenkins_data:
 
 networks:
-  jenkins-lab03:
+  jenkins-net:
     driver: bridge

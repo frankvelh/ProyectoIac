@@ -16,9 +16,9 @@ resource "null_resource" "build_backend_image" {
     EOT
   }
 
-  triggers = {
-    backend_image = sha256(file("../hotel-app/backend/Dockerfile"))
-  }
+triggers = {
+  always_run = "${timestamp()}"
+}
 
   depends_on = [aws_ecr_repository.backend]
 }

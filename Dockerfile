@@ -29,7 +29,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/sh
     apt-get install -y terraform
 
 # === Checkov ===
-RUN pip3 install checkov
+RUN pip3 install checkov --break-system-packages
 
 # === Node setup === (para proyectos con frontend)
 RUN npm install -g npm@latest

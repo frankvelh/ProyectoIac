@@ -1,5 +1,5 @@
 
-proyecto/
+Trabajo 1/
 ├── hotel-app/
 │   ├── backend/
 │   │   └── Dockerfile
@@ -14,7 +14,35 @@ proyecto/
 ├── outputs.tf
 ├── terraform.tfvars
 ├── variables.tf
-├── ...
+├── hotel-app/
+├── infra/
+├── jenkinsfile    
+└── docker-compose.yml
+├── jenkins/
+│   ├── Dockerfile
+│   ├── install-plugins.sh  
+    ├── docker-compose.yaml
+│   ├── jenkins.yaml
+│   └── plugins.txt          
+
+
+
+
+# Compilar el backend (Spring Boot):
+./mvnw clean package -DskipTests
+# Compilar el frontend (React/Angular)
+npm install
+npm run build
+# Costruir las imagenes:
+docker-compose build --no-cache
+# bajar los servicios 
+docker-compose down
+# Levantar la aplicación:
+docker-compose up -d
+
+# Actualiza accesos de aws:
+. .\env.ps1
+
 
 terraform apply -auto-approve
 
