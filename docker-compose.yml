@@ -46,18 +46,21 @@ services:
       context: ./jenkins
     container_name: jenkins-hotel
     ports:
-      - "40002:8080"
-      - "50001:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "40002:8080"    # UI Jenkins
+      - "50001:50000"   # Agentes Jenkins
     environment:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yaml
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - ./jenkins/jenkins.yaml:/var/jenkins_home/jenkins.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
     depends_on:
       - docker-agent
 
   docker-agent:
     image: docker:24.0.7-dind
+    container_name: docker-agent
     privileged: true
     environment:
       - DOCKER_TLS_CERTDIR=""

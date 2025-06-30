@@ -30,6 +30,9 @@ Trabajo 1/
 
 # Compilar el backend (Spring Boot):
 ./mvnw clean package -DskipTests
+
+npm install --save-dev jest jest-junit
+
 # Compilar el frontend (React/Angular)
 npm install
 npm run build
@@ -37,9 +40,10 @@ npm run build
 docker-compose build --no-cache
 # bajar los servicios 
 docker-compose down
+docker-compose down -v
 # Levantar la aplicación:
 docker-compose up -d
-
+docker-compose up -d --build
 # Actualiza accesos de aws:
 . .\env.ps1
 

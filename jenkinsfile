@@ -21,10 +21,12 @@ pipeline {
                 sh 'docker run --rm -v $PWD:/app bridgecrew/checkov -d /app'
             }
         }
+      
 
         stage('Test Backend') {
             steps {
                 dir('hotel-app/backend') {
+                    sh 'chmod +x mvnw'
                     sh './mvnw test'
                     junit 'target/surefire-reports/*.xml'
                 }
@@ -34,6 +36,7 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('hotel-app/backend') {
+                    sh 'chmod +x mvnw'
                     sh './mvnw clean package -DskipTests'
                 }
             }
