@@ -10,18 +10,23 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Run Checkov') {
+        stage('Checkov Analysis') {
             steps {
-                script {
-                    sh '''
-                    docker run --rm -v $WORKSPACE:/workspace bridgecrew/checkov -d /workspace
-                    '''
+                sh 'docker run --rm -v $PWD:/app bridgecrew/checkov -d /app'
+            }
+        }
+
+        stage('Test Backend') {
+            steps {
+                dir('hotel-app/backend') {
+                    sh './mvnw test'
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
@@ -29,9 +34,17 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('hotel-app/backend') {
+                    sh './mvnw clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Test Frontend') {
+            steps {
+                dir('hotel-app/frontend') {
                     sh '''
-                    chmod +x mvnw
-                    ./mvnw clean package -DskipTests
+                    docker run --rm -v $PWD:/app -w /app node:18 \
+                    sh -c "npm install && npm test"
                     '''
                 }
             }
@@ -41,7 +54,8 @@ pipeline {
             steps {
                 dir('hotel-app/frontend') {
                     sh '''
-                    docker run --rm -v $PWD:/app -w /app node:18 sh -c "npm install && npm run build"
+                    docker run --rm -v $PWD:/app -w /app node:18 \
+                    sh -c "npm install && npm run build"
                     '''
                 }
             }
@@ -64,8 +78,10 @@ pipeline {
                 ]]) {
                     sh '''
                     aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
                     docker tag hotel-backend:latest $BACKEND_IMAGE:latest
                     docker tag hotel-frontend:latest $FRONTEND_IMAGE:latest
+
                     docker push $BACKEND_IMAGE:latest
                     docker push $FRONTEND_IMAGE:latest
                     '''
@@ -92,13 +108,18 @@ pipeline {
 
     post {
         always {
+            echo "Pipeline finalizado"
             script {
-                if (fileExists('checkov-report.xml')) {
-                    junit 'checkov-report.xml'
+                if (fileExists('hotel-app/backend/target/surefire-reports')) {
+                    junit 'hotel-app/backend/target/surefire-reports/*.xml'
                 } else {
-                    echo 'No se encontró checkov-report.xml, omitiendo junit.'
+                    echo 'No hay resultados de pruebas JUnit para el backend.'
                 }
             }
+        }
+
+        failure {
+            echo "Pipeline fallido. Revisa los errores."
         }
     }
 }
