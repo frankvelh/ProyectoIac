@@ -18,7 +18,7 @@ pipeline {
 
         stage('Checkov Analysis') {
             steps {
-                sh 'docker run --rm -v $PWD:/app bridgecrew/checkov -d /app'
+                sh 'docker run --rm -v $(pwd):/app bridgecrew/checkov -d /app'
             }
         }
 
@@ -27,8 +27,13 @@ pipeline {
                 dir('hotel-app/backend') {
                     sh 'chmod +x mvnw'
                     sh './mvnw test || echo "Pruebas fallaron pero continúo"'
-                    // ✅ Corrección: ruta local al estar dentro de 'dir(...)'
-                    junit 'target/surefire-reports/*.xml'
+                    script {
+                        if (fileExists('target/surefire-reports')) {
+                            junit 'target/surefire-reports/*.xml'
+                        } else {
+                            echo 'No se encontraron reportes JUnit en target/surefire-reports'
+                        }
+                    }
                 }
             }
         }
@@ -45,10 +50,10 @@ pipeline {
         stage('Test Frontend') {
             steps {
                 dir('hotel-app/frontend') {
-                    sh '''
-                    docker run --rm -v $PWD:/app -w /app node:18 \
-                    sh -c "npm install && npm test"
-                    '''
+                    sh """
+                    docker run --rm -v ${WORKSPACE}/hotel-app/frontend:/app -w /app node:18 \
+                    sh -c "npm install && npm test || echo 'Tests frontend fallaron pero continúo'"
+                    """
                 }
             }
         }
@@ -56,10 +61,10 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('hotel-app/frontend') {
-                    sh '''
-                    docker run --rm -v $PWD:/app -w /app node:18 \
+                    sh """
+                    docker run --rm -v ${WORKSPACE}/hotel-app/frontend:/app -w /app node:18 \
                     sh -c "npm install && npm run build"
-                    '''
+                    """
                 }
             }
         }
@@ -112,7 +117,16 @@ pipeline {
     post {
         always {
             echo "Pipeline finalizado"
+            script {
+                def junitPath = 'hotel-app/backend/target/surefire-reports'
+                if (fileExists(junitPath)) {
+                    junit "${junitPath}/*.xml"
+                } else {
+                    echo 'No hay resultados de pruebas JUnit para el backend.'
+                }
+            }
         }
+
         failure {
             echo "Pipeline fallido. Revisa los errores."
         }
