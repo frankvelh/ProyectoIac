@@ -21,13 +21,13 @@ pipeline {
                 sh 'docker run --rm -v $PWD:/app bridgecrew/checkov -d /app'
             }
         }
-      
 
         stage('Test Backend') {
             steps {
                 dir('hotel-app/backend') {
                     sh 'chmod +x mvnw'
                     sh './mvnw test || echo "Pruebas fallaron pero continúo"'
+                    // ✅ Corrección: ruta local al estar dentro de 'dir(...)'
                     junit 'target/surefire-reports/*.xml'
                 }
             }
@@ -112,15 +112,7 @@ pipeline {
     post {
         always {
             echo "Pipeline finalizado"
-            script {
-                if (fileExists('hotel-app/backend/target/surefire-reports')) {
-                    junit 'hotel-app/backend/target/surefire-reports/*.xml'
-                } else {
-                    echo 'No hay resultados de pruebas JUnit para el backend.'
-                }
-            }
         }
-
         failure {
             echo "Pipeline fallido. Revisa los errores."
         }
