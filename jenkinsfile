@@ -63,11 +63,12 @@ pipeline {
                 dir('hotel-app/frontend') {
                     sh """
                     docker run --rm -v ${WORKSPACE}/hotel-app/frontend:/app -w /app node:18 \
-                    sh -c "npm install && npm run build"
+                    sh -c "ls -la && npm install && npm run build"
                     """
                 }
             }
         }
+
 
         stage('Build Docker Images') {
             steps {
