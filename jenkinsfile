@@ -41,7 +41,8 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('hotel-app/backend') {
-                    sh 'mvn clean install -DskipTests'
+                    sh 'chmod +x mvnw'
+                    sh './mvnw clean package -DskipTests'
                 }
             }
         }
@@ -58,16 +59,15 @@ pipeline {
         }
 
         stage('Build Frontend') {
-            steps {
-                dir('hotel-app/frontend') {
-                    script {
-                        if (fileExists('package.json')) {
-                            sh 'docker run --rm -v $PWD:/app -w /app node:18 sh -c "npm install && npm run build"'
-                        } else {
-                            echo "package.json no encontrado"
-                }
-            }
+    steps {
+        dir('hotel-app/frontend') {
+            sh '''
+            docker run --rm -v $PWD:/app -w /app node:18 \
+            sh -c "npm install && npm run build"
+            '''
         }
+    }
+}
 
 
 
