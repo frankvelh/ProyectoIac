@@ -57,17 +57,22 @@ pipeline {
                 }
             }
         }
+        stage('Verificar frontend') {
+            steps {
+                sh 'ls -la /var/jenkins_home/workspace/hotel-iac-pipeline/hotel-app/frontend'
+            }
+        }
 
         stage('Build Frontend') {
-    steps {
-        dir('hotel-app/frontend') {
-            sh '''
-            docker run --rm -v $PWD:/app -w /app node:18 \
-            sh -c "npm install && npm run build"
-            '''
+            steps {
+                dir('hotel-app/frontend') {
+                    sh '''
+                    docker run --rm -v $PWD:/app -w /app node:18 \
+                    sh -c "npm install && npm run build"
+                    '''
+                }
+            }
         }
-    }
-}
 
 
 
