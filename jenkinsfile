@@ -8,21 +8,21 @@ pipeline {
     FRONTEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hotel-frontend"
     BUCKET_NAME = 'hotel-reservas-web'
   }
+
   stages {
 
     stage('Checkout disable skip') {
       steps {
-        script{
+        script {
           sh "echo 'nada'"
         }
       }
     }
-  stages {
 
     stage('Checkout') {
       steps {
-        script{
-          sh "checkoz -d ./hotel-app/"
+        script {
+          sh "checkov -d ./hotel-app/"
         }
       }
     }
