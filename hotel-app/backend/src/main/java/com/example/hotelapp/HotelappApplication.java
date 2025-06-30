@@ -9,4 +9,4 @@ public class HotelappApplication {
 		SpringApplication.run(HotelappApplication.class, args);
 	}
 
-}
+}   
