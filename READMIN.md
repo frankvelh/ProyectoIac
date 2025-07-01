@@ -1,4 +1,17 @@
+## Proyecto IAC - Hotel App
+Este proyecto implementa una solución completa para el despliegue automático y escalable de una aplicación de gestión hotelera, utilizando prácticas DevOps modernas con **Terraform**, **Docker**, **Jenkins** y servicios en la nube de **Amazon Web Services (AWS)**.
 
+Descripción General
+El sistema se compone de:
+- Un backend desarrollado con Spring Boot.
+- Un **frontend** (posiblemente en React o Angular).
+- Contenedores Docker para cada módulo.
+- Orquestación con **Docker Compose**.
+- Automatización del pipeline de CI/CD mediante **Jenkins**.
+- Despliegue en la nube con **Terraform**, aprovechando servicios de AWS como EC2, S3, SES, CloudFront y CloudWatch.
+
+
+## Estructura
 Trabajo 1/
 ├── hotel-app/
 │   ├── backend/
@@ -26,10 +39,48 @@ Trabajo 1/
 │   └── plugins.txt          
 
 
+# Guía de Despliegue
+1. Pre-requisitos
+- Docker y Docker Compose
+- Terraform CLI 
+- Jenkins instalado y configurado
+- AWS CLI configurado (`aws configure`)
+- Java JDK 11+
+- Node.js y npm (solo si el frontend se ejecuta en modo dev)
+
+2. Construcción de Imágenes Docker
+
+# Backend
+cd hotel-app
+docker build -t hotel-backend .
+# Frontend
+cd ../frontend
+docker build -t hotel-frontend .
+
+3. Orquestación Local con Docker Compose
+docker-compose up -d
+Esto iniciará ambos contenedores y los enlazará para pruebas locales.
+
+4. Despliegue con Terraform en AWS
+# Inicializar Terraform
+terraform init
+
+# Verificar el plan
+terraform plan -var-file="terraform.tfvars"
+
+# Aplicar cambios
+terraform apply -var-file="terraform.tfvars"
+5. Pipeline CI/CD con Jenkins
+•	Jenkinsfile contiene las etapas:
+o	Build Docker de backend y frontend
+o	Push al registro (ECR o DockerHub)
+o	Aplicar Terraform para infraestructura
+o	Notificación por correo (vía SES)
 
 
 # Compilar el backend (Spring Boot):
 ./mvnw clean package -DskipTests
+./mvnw clean package
 
 npm install --save-dev jest jest-junit
 
@@ -57,51 +108,3 @@ docker build -t hotel-frontend .
 
 docker images
 terraform apply -auto-approve
-
-Backend
-$ECR_PW = aws ecr get-login-password --region us-east-2
-docker tag hotel-backend:latest 932119507588.dkr.ecr.us-east-2.amazonaws.com/hotel-backend:latest
-docker push 932119507588.dkr.ecr.us-east-2.amazonaws.com/hotel-backend:latest
-
-Frontend
-
-docker tag hotel-frontend:latest 932119507588.dkr.ecr.us-east-2.amazonaws.com/hotel-frontend:latest
-docker push 932119507588.dkr.ecr.us-east-2.amazonaws.com/hotel-frontend:latest
-
-docker con terraform
-
-
-
-Para tener docker funcionando debes instalar docker engine y luego usar los comandos siguientes primero build para crear la imagen y luego run para correr
-
-docker build -t hotel-backend:latest -f Dockerfile .
-
-
-comando para compilar el docker
-docker build -t hotel-devinfra -f Dockerfile .
-docker build -t hotel-devinfra -f Dockerfile .
-recostrir sin la cahe
-docker build --no-cache -t hotel-devinfra -f Dockerfile .
-
-
-comandos para ejecutar
-docker run -it -v ${ruta}:/infra -e AWS_ACCESS_KEY_ID=${ASIA5SBVG6KCGBRIAXMW} -e AWS_SECRET_ACCESS_KEY=${IuXzld5+SWZF4wHagS2+uZXe5i0RXwTz1jLCxkEw} terraform init
-# Comando base
-$base = "docker run -it --rm -v `"$pwd`":/infra -w /infra -e AWS_ACCESS_KEY_ID=$env:AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$env:AWS_SECRET_ACCESS_KEY $image" no usar
-
-
-Elecutar infra.ps1
-$env:AWS_ACCESS_KEY_ID = "TU_ACCESS_KEY"
-$env:AWS_SECRET_ACCESS_KEY = "TU_SECRET_KEY"
-
-Paso 2: Ejecuta el script con el comando deseado
-.\infra.ps1 init
-.\infra.ps1 plan
-.\infra.ps1 apply
-.\infra.ps1 destroy
-
-
-<!> listo
-
-SET AWS_ACCESS_KEY_ID=ASIA5SBVG6KCGBRIAXMW
-SET AWS_SECRET_ACCESS_KEY=IuXzld5+SWZF4wHagS2+uZXe5i0RXwTz1jLCxkEw
